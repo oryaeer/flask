@@ -1,36 +1,47 @@
 #!/usr/bin/env python
-#shalom
+# shalom
 
-import requests  # Importing the requests module to make HTTP requests
-from flask import Flask, render_template  # Importing the Flask class and the render_template function
+import requests
+from flask import Flask, render_template
 
-app = Flask(__name__)  # Creating a Flask application
+app = Flask(__name__)
 
-@app.route('/')  # Decorator for the root URL
+@app.route('/')
 def index():
-    return render_template('index.html')  # Render the 'index.html' template
+    return render_template('index.html')
 
-@app.route('/bitcoin')  # Decorator for the '/bitcoin' URL
+@app.route('/bitcoin')
 def get_bitcoin_rate():
     try:
         # Fetch Bitcoin rate from CoinGecko API
         response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd')
-        data = response.json()  # Convert the response to JSON format
-        bitcoin_rate = data['bitcoin']['usd']  # Extract the Bitcoin rate from the JSON response
-        return f'Bitcoin rate: ${bitcoin_rate}'  # Return the Bitcoin rate as a string
+        data = response.json()
+        bitcoin_rate = data['bitcoin']['usd']
+        return f'Bitcoin rate: ${bitcoin_rate}'
     except requests.exceptions.RequestException as e:
-        return f'Error: {str(e)}'  # Return an error message if there is an exception
+        return f'Error: {str(e)}'
 
-@app.route('/ethereum')  # Decorator for the '/ethereum' URL
+@app.route('/ethereum')
 def get_ethereum_rate():
     try:
         # Fetch Ethereum rate from CoinGecko API
         response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
-        data = response.json()  # Convert the response to JSON format
-        ethereum_rate = data['ethereum']['usd']  # Extract the Ethereum rate from the JSON response
-        return f'Ethereum rate: ${ethereum_rate}'  # Return the Ethereum rate as a string
+        data = response.json()
+        ethereum_rate = data['ethereum']['usd']
+        return f'Ethereum rate: ${ethereum_rate}'
     except requests.exceptions.RequestException as e:
-        return f'Error: {str(e)}'  # Return an error message if there is an exception
+        return f'Error: {str(e)}'
+
+@app.route('/spiderman-quotes')
+def get_spiderman_quotes():
+    try:
+        # Fetch Spider-Man quotes from API
+        response = requests.get('https://api.thedogapi.com/v1/images/search?limit=100&mime_types=jpg,png')
+        data = response.json()
+        quotes = [item['url'] for item in data]
+        return f'Spider-Man Quotes: {", ".join(quotes)}'
+    except requests.exceptions.RequestException as e:
+        return f'Error: {str(e)}'
 
 if __name__ == '__main__':
-    app.run(debug=True)  # Start the Flask development server
+    app.run(debug=True)
