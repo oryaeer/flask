@@ -4,7 +4,7 @@
     <title>Cryptocurrency Rates</title>
     <style>
         body {
-            background-image: url('https://i.pinimg.com/originals/71/9e/80/719e80760999b4c355a723224120eb07.png'); /* Replace with the path to your background image */
+            background-image: url('path/to/your/image.jpg'); /* Replace with the path to your background image */
             background-repeat: no-repeat;
             background-size: cover;
             background-position: center;
@@ -45,13 +45,17 @@
         .button:hover {
             background-color: #0056b3; /* Darker shade on hover */
         }
+        .button.active {
+            font-weight: bold;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Cryptocurrency Rates</h1>
-        <a class="button" href="/bitcoin">Bitcoin</a>
-        <a class="button" href="/ethereum">Ethereum</a>
+        <a class="button" id="bitcoinButton" href="/bitcoin">Bitcoin</a>
+        <a class="button" id="ethereumButton" href="/ethereum">Ethereum</a>
         <div id="rate"></div>
     </div>
     <script>
@@ -65,6 +69,12 @@
                     .then(response => response.text())
                     .then(data => {
                         rateDiv.innerHTML = data;
+                        // Remove 'active' class from all buttons
+                        for (let j = 0; j < buttons.length; j++) {
+                            buttons[j].classList.remove('active');
+                        }
+                        // Add 'active' class to the clicked button
+                        event.target.classList.add('active');
                     });
             });
         }
