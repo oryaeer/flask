@@ -29,7 +29,7 @@ pipeline {
             steps {
                 sh 'echo "pushing to s3"'
                 sh 'echo "packaging"'
-                sh 'aws s3 cp /var/lib/jenkins/workspace/first pipeline/crypto.tar.gz s3://oryaeer'
+                sh 'aws s3 cp /var/lib/jenkins/workspace/first/ pipeline/crypto.tar.gz s3://oryaeer'
             }
         }
         stage('check for the connection'){
