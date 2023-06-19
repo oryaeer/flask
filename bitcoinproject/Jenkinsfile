@@ -1,92 +1,79 @@
 pipeline {
     agent any
-        environment {
-        EC2_IP = "3.80.109.91"
+    
+    environment {
+        EC2_IP = "34.230.35.202"
     }
+    
     stages {
         stage('Cleanup') {
             steps {
-                sh 'echo "Performing cleanup..."'
+                echo "Performing cleanup..."
                 sh 'rm -rf *'
             }
         }
+        
         stage('Clone') {
             steps {
-                sh 'echo "Building..."'
+                echo "Building..."
                 sh 'git clone https://github.com/oryaeer/flask.git'
                 sh 'ls'
             }
         }
+        
         stage('Packaging To S3') {
             steps {
-                sh 'echo "packaging"'
+                echo "Packaging..."
                 sh 'tar -czvf crypto.tar.gz flask'
                 sh 'ls'
                 sh 'pwd'
             }
         }
+        
         stage('Push To Cloud') {
             steps {
-                sh 'echo "pushing to s3"'
-                sh 'echo "packaging"'
+                echo "Pushing to S3"
                 sh 'aws s3 cp /var/lib/jenkins/workspace/first_pipeline/crypto.tar.gz s3://oryaeer'
             }
         }
-        stage('check for the connection'){
-            steps {
-                sh 'ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP}'
-            }
-        }
+        
         stage('Fetch from S3 To EC2') {
             steps {
                 withAWS(credentials: 'Jenkins-AWS') {
-                sh 'aws s3 cp s3://oryaeer/crypto.tar.gz /var/lib/jenkins/workspace/crypto.tar.gz'
-                sshagent(['aws-key-ssh']) {
-                         sh 'scp -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem /var/lib/jenkins/workspace/crypto.tar.gz ec2-user@${EC2_IP}:/home/ec2-user'
+                    sh 'aws s3 cp s3://oryaeer/crypto.tar.gz /var/lib/jenkins/workspace/crypto.tar.gz'
+                    sshagent(['aws-key-ssh']) {
+                        sh 'scp -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem /var/lib/jenkins/workspace/crypto.tar.gz ec2-user@${EC2_IP}:/home/ec2-user'
+                    }
+                }
             }
         }
-    }
-}
+        
         stage('Setting Up The Server') {
             steps {
                 script {
                     withCredentials([sshUserPrivateKey(credentialsId: 'aws-key-ssh', keyFileVariable: 'KEY_FILE')]) {
-                    sshagent(['aws-key-ssh']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
-                    tar -xvf /home/ec2-user/crypto.tar.gz
-                    rm -r crypto.tar.gz
-                    sudo yum install python -y
-                    sudo yum install python3-pip -y
-                    sudo pip install ansible
-                    
-                    
-                    '
-                    """
+                        sshagent(['aws-key-ssh']) {
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
+                            tar -xvf /home/ec2-user/crypto.tar.gz
+                            rm -r crypto.tar.gz
+                            sudo yum install python -y
+                            sudo yum install python3-pip -y
+                            sudo pip install ansible
+                            '
+                            """
+                        }
+                    }
                 }
             }
         }
-    }
-}
-        //stage('Test') {
-          //  steps {
-            //    sh 'echo "Testing..."'
-              //  sh 'echo "Provisioning a new instance..."'
-                //sh 'ansible-playbook -i /var/lib/jenkins/workspace/playbook/inventory.ini /var/lib/jenkins/workspace/playbook/deploy.yml'
-            //}
-        //}
+        
         stage('Deploy') {
             steps {
-                sh 'echo "Deploying..."'
-                sh 'echo "Running the artifact on the new instance..."'
-                sh 'ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP}'
-                ansible-playbook /home/ec2-user/flask/bitcoinproject/requirements.yml
+                echo "Deploying..."
+                echo "Running the artifact on the new instance..."
+                sh 'ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} ansible-playbook /home/ec2-user/flask/bitcoinproject/requirements.yml'
             }
         }
     }
 }
-
-
-
-
-
