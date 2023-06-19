@@ -58,7 +58,7 @@ pipeline {
                     rm -r crypto.tar.gz
                     sudo yum install python -y
                     sudo yum install python3-pip -y
-                    sudo pip install ansible -y
+                    sudo pip install ansible
                     
                     ansible-playbook /home/ec2-user/flask/bitcoinproject/requirements.yml
                     '
