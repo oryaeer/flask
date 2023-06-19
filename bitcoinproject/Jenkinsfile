@@ -22,6 +22,7 @@ pipeline {
                 sh 'echo "packaging"'
                 sh 'tar -czvf crypto.tar.gz flask'
                 sh 'ls'
+                sh 'pwd'
             }
         }
         stage('Push To Cloud') {
