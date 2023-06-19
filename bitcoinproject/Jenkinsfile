@@ -7,14 +7,12 @@ pipeline {
         stage('Cleanup') {
             steps {
                 sh 'echo "Performing cleanup..."'
-                sh 'cd /var/lib/jenkins/jenkins'
                 sh 'rm -rf *'
             }
         }
         stage('Clone') {
             steps {
                 sh 'echo "Building..."'
-                sh 'cd /var/lib/jenkins/jenkins'
                 sh 'git clone https://github.com/oryaeer/flask.git'
                 sh 'ls'
             }
@@ -22,7 +20,6 @@ pipeline {
         stage('Packaging To S3') {
             steps {
                 sh 'echo "packaging"'
-                sh 'cd /var/lib/jenkins/jenkins'
                 sh 'tar -czvf crypto.tar.gz flask'
                 sh 'ls'
                 sh 'pwd'
@@ -32,7 +29,7 @@ pipeline {
             steps {
                 sh 'echo "pushing to s3"'
                 sh 'echo "packaging"'
-                sh 'aws s3 cp /var/lib/jenkins/jenkins/crypto.tar.gz s3://oryaeer'
+                sh 'aws s3 cp /home/oryaeer/.jenkins/crypto.tar.gz s3://oryaeer'
             }
         }
         stage('check for the connection'){
