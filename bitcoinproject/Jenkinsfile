@@ -42,7 +42,7 @@ pipeline {
                 withAWS(credentials: 'Jenkins-AWS') {
                 sh 'aws s3 cp s3://oryaeer/crypto.tar.gz /var/lib/jenkins/workspace/crypto.tar.gz'
                 sshagent(['aws-key-ssh']) {
-                         sh 'scp -i /var/lib/jenkins/oryaeer.pem /var/lib/jenkins/workspace/crypto.tar.gz ec2-user@${EC2_IP}:/home/ec2-user'
+                         sh 'scp -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem /var/lib/jenkins/workspace/crypto.tar.gz ec2-user@${EC2_IP}:/home/ec2-user'
             }
         }
     }
