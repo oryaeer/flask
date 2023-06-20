@@ -59,7 +59,6 @@ pipeline {
                             sh """
                             ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
                             tar -xvf /home/ec2-user/crypto.tar.gz
-                            rm -r crypto.tar.gz
                             sudo yum install python -y
                             sudo yum install python3-pip -y
                             sudo pip install ansible
