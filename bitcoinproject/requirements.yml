@@ -46,7 +46,7 @@
 
     - name: Create Flask systemd service
       template:
-        src: /home/ec2-user/flask/bitcoinproject/flask.service
+        src: /home/ec2-user/flask/bitcoinproject/flask.py
         dest: /etc/systemd/system/flaskapp.service
 
     - name: Reload systemd daemon
