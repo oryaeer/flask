@@ -17,8 +17,10 @@ pipeline {
             steps {
                 echo "Building..."
                 sh 'git clone https://github.com/oryaeer/flask.git'
-                sh 'cd flask/bitcoinproject/'
-                sh 'ls'
+                sh '''
+                cd flask/bitcoinproject/
+                    ls
+                '''
             }
         }
         
