@@ -69,11 +69,17 @@ pipeline {
         }
         
         stage('Deploy') {
-            steps {
-                echo "Deploying..."
-                echo "Running the artifact on the new instance..."
-                sh 'ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP}'
-                sh 'ansible-playbook /home/ec2-user/flask/bitcoinproject/requirements.yml'
+    steps {
+        echo "Deploying..."
+        echo "Running the artifact on the new instance..."
+        sh '''
+        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
+            ansible-playbook /home/ec2-user/flask/bitcoinproject/requirements.yml
+        '
+        '''
+    }
+}
+
             }
         }
     }
