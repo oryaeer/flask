@@ -27,7 +27,7 @@ pipeline {
         stage('Packaging To S3') {
             steps {
                 echo "Packaging..."
-                sh 'tar -czvf /var/lib/jenkins/workspace/first_pipeline/ -C /var/lib/jenkins/workspace/first_pipeline/bitcoinproject'
+                sh 'tar -czvf /var/lib/workspace/first_pipeline/crypto.tar.gz /var/lib/jenkins/workspace/first_pipeline/bitcoinproject/'
                 sh 'tar -tvf /var/lib/jenkins/workspace/first_pipeline/crypto.tar.gz' // List the contents of the archive
                 sh 'ls'
                 sh 'pwd'
