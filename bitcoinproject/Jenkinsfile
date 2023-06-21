@@ -18,7 +18,7 @@ pipeline {
                 echo "Building..."
                 sh 'git clone https://github.com/oryaeer/flask.git /var/lib/jenkins/workspace/first_pipeline/'
                 sh '''
-                cd /var/lib/jenkins/workspace/first_pipeline/flask/bitcoinproject/
+                cd /var/lib/jenkins/workspace/first_pipeline/bitcoinproject/
                 ls
                 '''
             }
