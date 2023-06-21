@@ -28,6 +28,7 @@ pipeline {
             steps {
                 echo "Packaging..."
                 sh 'tar -czvf crypto.tar.gz flask'
+                sh 'tar -tvf crypto.tar.gz' // List the contents of the archive
                 sh 'ls'
                 sh 'pwd'
             }
