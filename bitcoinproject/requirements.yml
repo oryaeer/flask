@@ -1,6 +1,6 @@
 ---
 - name: Install SSH, Apache, Python, Flask, and Clone Git repository
-  hosts: all
+  hosts: local host
   become: true
 
   tasks:
