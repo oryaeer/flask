@@ -28,9 +28,9 @@ pipeline {
             steps {
                 echo "Packaging..."
                 sh '''
-                    cd /var/lib/jenkins/workspace/first_pipeline/
-                        tar -czvf bitcoinproject'
-                    '''
+                cd /var/lib/jenkins/workspace/first_pipeline/
+                tar -czvf crypto.tar.gz bitcoinproject
+                '''
                 sh 'tar -tvf /var/lib/jenkins/workspace/first_pipeline/crypto.tar.gz' // List the contents of the archive
                 sh 'ls'
                 sh 'pwd'
