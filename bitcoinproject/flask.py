@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=ec2-user
 Group=ec2-user
-WorkingDirectory=/home/ec2-user/flask/bitcoinproject/
+WorkingDirectory=/home/ec2-user/bitcoinproject/
 ExecStart=gunicorn --bind 0.0.0.0:5000 app:app &
 Restart=always
 
