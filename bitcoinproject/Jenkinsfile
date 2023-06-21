@@ -16,7 +16,7 @@ pipeline {
         stage('Clone') {
             steps {
                 echo "Building..."
-                sh 'git clone https://github.com/oryaeer/flask.git'
+                sh 'git clone https://github.com/oryaeer/flask.git' /var/lib/jenkins/workspace/first_pipeline/
                 sh '''
                 cd flask/bitcoinproject/
                     ls
@@ -27,7 +27,7 @@ pipeline {
         stage('Packaging To S3') {
             steps {
                 echo "Packaging..."
-                sh 'tar -czvf crypto.tar.gz flask'
+                sh 'tar -czvf /var/lib/jenkins/workspace/first_pipeline/crypto.tar.gz flask'
                 sh 'tar -tvf crypto.tar.gz' // List the contents of the archive
                 sh 'ls'
                 sh 'pwd'
