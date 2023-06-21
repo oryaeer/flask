@@ -59,7 +59,7 @@ pipeline {
                         sshagent(['aws-key-ssh']) {
                             sh """
                             ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
-                            tar -xvf /home/ec2-user/crypto.tar.gz
+                            tar -xvf /home/ec2-user/crypto.tar.gz -C /home/ec2-user/flask/bitcoinproject/
                             sudo yum install python -y
                             sudo yum install python3-pip -y
                             sudo pip install ansible
