@@ -73,7 +73,21 @@ pipeline {
                 }
             }
         }
-
+        
+        stage('Test') {
+            steps {
+                echo "Running tests..."
+                sh '''
+                status=$(curl -o /dev/null -s -w "%{http_code}" http://${EC2_IP}:5000)
+                if [ $status -eq 200 ]; then
+                    echo "Website is accessible with 200 OK status"
+                else
+                    echo "Website is not accessible. Status code: $status"
+                    exit 1
+                fi
+                '''
+            }
+        }
         
         stage('Deploy') {
             steps {
@@ -82,9 +96,3 @@ pipeline {
                 sh '''
                 ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
                     ansible-playbook /home/ec2-user/bitcoinproject/requirements.yml
-                '
-                '''
-            }
-        }
-    }
-}
