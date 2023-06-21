@@ -96,3 +96,9 @@ pipeline {
                 sh '''
                 ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
                     ansible-playbook /home/ec2-user/bitcoinproject/requirements.yml
+                '
+                '''
+            }
+        }
+    }
+}
