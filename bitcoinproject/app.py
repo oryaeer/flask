@@ -3,12 +3,17 @@
 
 import requests
 from flask import Flask, render_template
+import redis
 
 app = Flask(__name__)
+redis_client = redis.Redis(host='redis', port=6379)  # Create a Redis client instance
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Retrieve the count from Redis and increment it
+    count = redis_client.incr('site_refresh_count')
+
+    return render_template('index.html', count=count)
 
 @app.route('/bitcoin')
 def get_bitcoin_rate():
