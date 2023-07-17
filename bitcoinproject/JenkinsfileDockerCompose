@@ -1,0 +1,161 @@
+pipeline {
+    agent any
+
+    environment {
+        EC2_IP = "54.91.126.120"
+        EC2_IP_TEST = "54.173.138.214"
+    }
+
+    stages {
+        stage('Cleanup') {
+            steps {
+                echo "Stopping running containers if any..."
+                sh """
+                ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
+                    container_ids=\$(sudo docker ps -q)
+                    if [ -n "\$container_ids" ]; then
+                        sudo docker kill \$container_ids
+                    else
+                        echo "No running containers found."
+                    fi
+
+                    container_ids=\$(sudo docker ps -aq)
+                    if [ -n "\$container_ids" ]; then
+                        sudo docker rm \$container_ids
+                    else
+                        echo "No containers to remove."
+                    fi
+
+                    sudo docker rmi -f oryaeer/flaskapp:new
+                '
+                """
+            }
+        }
+
+        stage('Build And Push The Image To Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        // Switch to oryaeer user and execute Docker build and push commands
+                        sh '''
+                        echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                            cd /home/oryaeer/Desktop/flask/bitcoinproject
+                            git pull
+                            pwd
+                            docker build --tag oryaeer/flaskapp:new .
+
+                            docker push oryaeer/flaskapp:new
+
+                        '
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Test Website') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'aws-key-ssh', keyFileVariable: 'KEY_FILE')]) {
+                        sshagent(['aws-key-ssh']) {
+                            // Any setup steps for the SSH connection on the test server
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP_TEST} '
+                                sudo yum install docker -y
+                                sudo service docker start
+                                sudo curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-\$(uname -s)-\$(uname -m) -o /usr/local/bin/docker-compose
+                                sudo chmod +x /usr/local/bin/docker-compose
+                                sudo docker docker-compose down
+                            '
+                            """
+
+                            // Copy files to the test server
+                            sh """
+                            scp -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem -r /var/lib/jenkins/workspace/docker_pipeline/docker-compose.yml ec2-user@${EC2_IP_TEST}:/home/ec2-user
+                            """
+
+                            // Run the Docker container on the test server
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP_TEST} '
+                                cd /home/ec2-user
+                                sudo docker-compose up -d
+                            '
+                            """
+
+                            // Test the website on the test server
+                            echo "Testing website..."
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP_TEST} '
+                                status_code=\$(curl -sL -w "%{http_code}" "http://localhost:5000" -o /dev/null)
+                                if [ \$status_code -eq 200 ]; then
+                                    echo "Website is working fine"
+                                else
+                                    echo "Website is not responding with 200 OK"
+                                fi
+                            '
+                            """
+
+                            // Shut down the test EC2 instance
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP_TEST} '
+                                sudo poweroff
+                            '
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Set Up SSH Connection') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'aws-key-ssh', keyFileVariable: 'KEY_FILE')]) {
+                        sshagent(['aws-key-ssh']) {
+                            sh """
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} '
+                                # Any setup steps for the SSH connection
+                                # For example, installing Docker
+                                sudo yum install docker -y
+                                sudo service docker start
+                                sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+                                sudo chmod +x /usr/local/bin/docker-compose
+                            '
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('SCP Files to Remote Server') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'aws-key-ssh', keyFileVariable: 'KEY_FILE')]) {
+                        sh """
+                        scp -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem -r /var/lib/jenkins/workspace/docker_pipeline/docker-compose.yml ec2-user@${EC2_IP}:/home/ec2-user
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Run') {
+            steps {
+                echo "Running Docker container..."
+                script {
+                    def runningContainers = sh(
+                        returnStdout: true,
+                        script: "ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} 'sudo docker ps -q'"
+                    ).trim()
+
+                    if (runningContainers) {
+                        sh "ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} 'sudo docker-compose restart -d'"
+                    } else {
+                        sh "ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/oryaeer.pem ec2-user@${EC2_IP} 'sudo docker-compose up -d'"
+                    }
+                }
+            }
+        }
+    }
+}
