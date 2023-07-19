@@ -1,7 +1,7 @@
 def performKubernetesApply() {
     // Apply Flask app deployment
     sh """
-    kubectl apply -f flask-app-deployment.yaml
+    kubectl apply -f /path/to/remote/server/flask-app-deployment.yaml
     """
     
     // Apply Flask app service
@@ -20,10 +20,6 @@ def performKubernetesApply() {
 
 pipeline {
     agent any
-
-    environment {
-        EC2_IP = "54.91.126.120"
-    }
 
     stages {
         stage('Cleanup') {
@@ -79,7 +75,13 @@ pipeline {
                 
                 // Copy flask-app-deployment.yaml to the remote server
                 sh """
-                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /path/to/remote/server
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /var/lib/jenkins/workspace/docker_pipeline/
+                """
+                sh """
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flasp-app-service.yaml /var/lib/jenkins/workspace/docker_pipeline/
+                """
+                sh """
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/deployservice.yaml /var/lib/jenkins/workspace/docker_pipeline/
                 """
                 
                 // Call the function to perform Kubernetes apply
@@ -92,7 +94,7 @@ pipeline {
                 // Test the website on the IP 192.168.56.1
                 echo "Testing website..."
                 sh """
-                status_code=\$(curl -sL -w "%{http_code}" "http://192.168.56.1:5000" -o /dev/null)
+                status_code=\$(curl -sL -w "%{http_code}" "http://192.168.56.1:32000" -o /dev/null)
                 if [ \$status_code -eq 200 ]; then
                     echo "Website is working fine"
                 else
@@ -102,15 +104,15 @@ pipeline {
             }
         }
         
-        //stage('Cleanup Kubernetes Resources on test server') {
-          //  steps {
+        stage('Cleanup Kubernetes Resources on test server') {
+            steps {
                 // Delete Kubernetes resources
-            //    sh """
-              //  kubectl delete -f /path/to/remote/server/flask-app-deployment.yaml
-                //kubectl delete -f flask-app-service.yaml
-                //kubectl delete -f deployservice.yaml
-               // """
-           // }
-        //}
+                sh """
+                kubectl delete -f /path/to/remote/server/flask-app-deployment.yaml
+                kubectl delete -f flask-app-service.yaml
+                kubectl delete -f deployservice.yaml
+                """
+            }
+        }
     }
 }
