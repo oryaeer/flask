@@ -24,26 +24,30 @@ pipeline {
     stages {
         stage('Cleanup') {
             steps {
-                echo "Stopping running containers if any..."
-                script {
-                    // Stop and remove running containers
+                withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    echo "Switching to oryaeer user and performing cleanup..."
                     sh """
-                    container_ids=\$(docker ps -q)
-                    if [ -n "\$container_ids" ]; then
-                        docker kill \$container_ids
-                    else
-                        echo "No running containers found."
-                    fi
+                    echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                        whoami
+                        container_ids=\$(docker ps -q)
+                        if [ -n "\$container_ids" ]; then
+                            docker kill \$container_ids
+                        else
+                            echo "No running containers found."
+                        fi
 
-                    container_ids=\$(docker ps -aq)
-                    if [ -n "\$container_ids" ]; then
-                        docker rm \$container_ids
-                    else
-                        echo "No containers to remove."
-                    fi
+                        container_ids=\$(docker ps -aq)
+                        if [ -n "\$container_ids" ]; then
+                            docker rm \$container_ids
+                        else
+                            echo "No containers to remove."
+                        fi
 
-                    docker rmi -f oryaeer/flaskapp:new
+                        docker rmi -f oryaeer/flaskapp:new
+
+                    '
                     """
+
                 }
             }
         }
