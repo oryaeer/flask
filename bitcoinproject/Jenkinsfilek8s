@@ -77,15 +77,9 @@ pipeline {
             steps {
                 echo "Applying Kubernetes manifests..."
                 
-                // Copy flask-app-deployment.yaml to the Jenkins workspace
+                // Copy flask-app-deployment.yaml to the remote server
                 sh """
-                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /var/lib/jenkins/workspace/docker_pipeline/
-                """
-                sh """
-                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flasp-app-service.yaml /var/lib/jenkins/workspace/docker_pipeline/flask-app-service.yaml
-                """
-                sh """
-                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/deployservice.yaml /var/lib/jenkins/workspace/docker_pipeline/
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /path/to/remote/server
                 """
                 
                 // Call the function to perform Kubernetes apply
@@ -109,14 +103,14 @@ pipeline {
         }
         
         //stage('Cleanup Kubernetes Resources on test server') {
-            //steps {
+          //  steps {
                 // Delete Kubernetes resources
-                //sh """
-                //kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-deployment.yaml
-                //kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-service.yaml
-              //  kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/deployservice.yaml
-            //    """
-          //  }
+            //    sh """
+              //  kubectl delete -f /path/to/remote/server/flask-app-deployment.yaml
+                //kubectl delete -f flask-app-service.yaml
+                //kubectl delete -f deployservice.yaml
+               // """
+           // }
         //}
     }
 }
