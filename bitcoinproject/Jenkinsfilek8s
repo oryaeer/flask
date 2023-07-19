@@ -1,17 +1,17 @@
 def performKubernetesApply() {
     // Apply Flask app deployment
     sh """
-    kubectl apply -f /path/to/remote/server/flask-app-deployment.yaml
+    kubectl apply -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-deployment.yaml
     """
     
     // Apply Flask app service
     sh """
-    kubectl apply -f flask-app-service.yaml
+    kubectl apply -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-service.yaml
     """
     
     // Apply deploy service
     sh """
-    kubectl apply -f deployservice.yaml
+    kubectl apply -f /var/lib/jenkins/workspace/docker_pipeline/deployservice.yaml
     """
     
     // Sleep for a few seconds to allow the application to start
@@ -21,33 +21,33 @@ def performKubernetesApply() {
 pipeline {
     agent any
 
-    environment {
-        EC2_IP = "54.91.126.120"
-    }
-
     stages {
         stage('Cleanup') {
             steps {
-                echo "Stopping running containers if any..."
-                script {
-                    // Stop and remove running containers
+                withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    echo "Switching to oryaeer user and performing cleanup..."
                     sh """
-                    container_ids=\$(docker ps -q)
-                    if [ -n "\$container_ids" ]; then
-                        docker kill \$container_ids
-                    else
-                        echo "No running containers found."
-                    fi
+                    echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                        whoami
+                        container_ids=\$(docker ps -q)
+                        if [ -n "\$container_ids" ]; then
+                            docker kill \$container_ids
+                        else
+                            echo "No running containers found."
+                        fi
 
-                    container_ids=\$(docker ps -aq)
-                    if [ -n "\$container_ids" ]; then
-                        docker rm \$container_ids
-                    else
-                        echo "No containers to remove."
-                    fi
+                        container_ids=\$(docker ps -aq)
+                        if [ -n "\$container_ids" ]; then
+                            docker rm \$container_ids
+                        else
+                            echo "No containers to remove."
+                        fi
 
-                    docker rmi -f oryaeer/flaskapp:new
+                        docker rmi -f oryaeer/flaskapp:new
+
+                    '
                     """
+
                 }
             }
         }
@@ -77,9 +77,15 @@ pipeline {
             steps {
                 echo "Applying Kubernetes manifests..."
                 
-                // Copy flask-app-deployment.yaml to the remote server
+                // Copy flask-app-deployment.yaml to the Jenkins workspace
                 sh """
-                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /path/to/remote/server
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /var/lib/jenkins/workspace/docker_pipeline/
+                """
+                sh """
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flasp-app-service.yaml /var/lib/jenkins/workspace/docker_pipeline/flask-app-service.yaml
+                """
+                sh """
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/deployservice.yaml /var/lib/jenkins/workspace/docker_pipeline/
                 """
                 
                 // Call the function to perform Kubernetes apply
@@ -92,7 +98,7 @@ pipeline {
                 // Test the website on the IP 192.168.56.1
                 echo "Testing website..."
                 sh """
-                status_code=\$(curl -sL -w "%{http_code}" "http://192.168.56.1:5000" -o /dev/null)
+                status_code=\$(curl -sL -w "%{http_code}" "http://192.168.56.1:32000" -o /dev/null)
                 if [ \$status_code -eq 200 ]; then
                     echo "Website is working fine"
                 else
@@ -103,14 +109,14 @@ pipeline {
         }
         
         //stage('Cleanup Kubernetes Resources on test server') {
-          //  steps {
+            //steps {
                 // Delete Kubernetes resources
-            //    sh """
-              //  kubectl delete -f /path/to/remote/server/flask-app-deployment.yaml
-                //kubectl delete -f flask-app-service.yaml
-                //kubectl delete -f deployservice.yaml
-               // """
-           // }
+                //sh """
+                //kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-deployment.yaml
+                //kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/flask-app-service.yaml
+              //  kubectl delete -f /var/lib/jenkins/workspace/docker_pipeline/deployservice.yaml
+            //    """
+          //  }
         //}
     }
 }

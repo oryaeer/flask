@@ -1,10 +1,8 @@
 version: "3"
 services:
   web:
-    image: oryaeer/flaskapp:latest
+    image: oryaeer/flaskapp:new
     ports:
       - "5000:5000"
   redis:
     image: redis
-    volumes:
-      - /home/oryaeer/Desktop/redisdata:/data
