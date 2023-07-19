@@ -1,0 +1,116 @@
+def performKubernetesApply() {
+    // Apply Flask app deployment
+    sh """
+    kubectl apply -f /path/to/remote/server/flask-app-deployment.yaml
+    """
+    
+    // Apply Flask app service
+    sh """
+    kubectl apply -f flask-app-service.yaml
+    """
+    
+    // Apply deploy service
+    sh """
+    kubectl apply -f deployservice.yaml
+    """
+    
+    // Sleep for a few seconds to allow the application to start
+    sleep 20
+}
+
+pipeline {
+    agent any
+
+    environment {
+        EC2_IP = "54.91.126.120"
+    }
+
+    stages {
+        stage('Cleanup') {
+            steps {
+                echo "Stopping running containers if any..."
+                script {
+                    // Stop and remove running containers
+                    sh """
+                    container_ids=\$(docker ps -q)
+                    if [ -n "\$container_ids" ]; then
+                        docker kill \$container_ids
+                    else
+                        echo "No running containers found."
+                    fi
+
+                    container_ids=\$(docker ps -aq)
+                    if [ -n "\$container_ids" ]; then
+                        docker rm \$container_ids
+                    else
+                        echo "No containers to remove."
+                    fi
+
+                    docker rmi -f oryaeer/flaskapp:new
+                    """
+                }
+            }
+        }
+
+        stage('Build And Push The Image To Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        // Switch to oryaeer user and execute Docker build and push commands
+                        sh '''
+                        echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                            cd /home/oryaeer/Desktop/flask/bitcoinproject
+                            git pull
+                            pwd
+                            docker build --tag oryaeer/flaskapp:new .
+
+                            docker push oryaeer/flaskapp:new
+
+                        '
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Apply Kubernetes Manifests on test server') {
+            steps {
+                echo "Applying Kubernetes manifests..."
+                
+                // Copy flask-app-deployment.yaml to the remote server
+                sh """
+                sudo cp /home/oryaeer/Desktop/flask/bitcoinproject/flask-app-deployment.yaml /path/to/remote/server
+                """
+                
+                // Call the function to perform Kubernetes apply
+                performKubernetesApply()
+            }
+        }
+
+        stage('Test Website') {
+            steps {
+                // Test the website on the IP 192.168.56.1
+                echo "Testing website..."
+                sh """
+                status_code=\$(curl -sL -w "%{http_code}" "http://192.168.56.1:5000" -o /dev/null)
+                if [ \$status_code -eq 200 ]; then
+                    echo "Website is working fine"
+                else
+                    echo "Website is not responding with 200 OK"
+                fi
+                """
+            }
+        }
+        
+        //stage('Cleanup Kubernetes Resources on test server') {
+          //  steps {
+                // Delete Kubernetes resources
+            //    sh """
+              //  kubectl delete -f /path/to/remote/server/flask-app-deployment.yaml
+                //kubectl delete -f flask-app-service.yaml
+                //kubectl delete -f deployservice.yaml
+               // """
+           // }
+        //}
+    }
+}
