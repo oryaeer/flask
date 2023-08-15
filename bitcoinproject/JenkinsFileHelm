@@ -1,0 +1,176 @@
+def deployKubernetesResources() {
+    def releaseName = "my-gcs-repo"
+    dir('flask/bitcoinproject') {
+        sh "helm repo update"
+        // Check if the Helm release already exists
+        def releaseStatus = sh(
+            script: "helm status $releaseName",
+            returnStatus: true
+        ).trim()
+        if (releaseStatus == 0) {
+            echo "Helm release '$releaseName' already exists. Upgrading..."
+            sh "helm upgrade $releaseName my-flask-app/"
+        } else {
+            echo "Helm release '$releaseName' doesn't exist. Installing..."
+            sh "helm install $releaseName my-flask-app/"
+        }
+
+
+
+
+def performKubernetesApply(clusterName) {
+    // Apply Flask app deployment
+    sh """
+    gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2
+    
+    helm repo update
+    helm install my-gcs-repo /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/
+    
+    
+    
+    """
+
+
+
+    // Sleep for a few seconds to allow the application to start
+    sleep 20
+}
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Cleanup') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    echo "Switching to oryaeer user and performing cleanup..."
+                    sh """
+                    echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                        whoami
+                        docker rmi -f oryaeer/flaskapp:new
+                        docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
+                    '
+                    """
+                }
+            }
+        }
+
+        stage('Build And Push The Image To Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        // Switch to oryaeer user and execute Docker build and push commands
+                        sh """
+                        echo \$PASSWORD | sudo -S -u oryaeer bash -c '
+                            cd /home/oryaeer/Desktop/flask/bitcoinproject
+                            git pull
+                            pwd
+                            docker build --tag oryaeer/flaskapp:5.${BUILD_NUMBER} -t oryaeer/flaskapp:new .
+                            docker push oryaeer/flaskapp:new
+                            docker push oryaeer/flaskapp:5.${BUILD_NUMBER}
+                            chmod +x /home/oryaeer/Desktop/flask/bitcoinproject/scripts/helm-version.sh
+                            ./scripts/helm-version.sh
+                            helm package /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask
+                            gsutil cp my-flask-app-0.1.${BUILD_NUMBER}.tgz gs://helmoryaeer
+                            rm my-first-flask/my-flask-app-0.1.${BUILD_NUMBER}.tgz
+                        '
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Apply Kubernetes Manifests on test server') {
+            steps {
+                echo "Applying Kubernetes manifests..."
+
+                // Define the path for the destination directory
+                script {
+                    def destDir = "/var/lib/jenkins/workspace/docker_pipeline/k8s/bitcoinproject"
+
+                    // Check if the directory exists
+                    sh """
+                    if [ ! -d ${destDir} ]; then
+                        sudo git clone https://github.com/oryaeer/flask.git /var/lib/jenkins/workspace/docker_pipeline/k8s/bitcoinproject
+                    else
+                        echo \"Directory already exists. Skipping git clone.\"
+                    fi
+                    """
+
+                    // Call the function to perform Kubernetes apply
+                    performKubernetesApply("cluster-test")
+
+                    // Wait until the deployment and service are ready
+                    sh """
+                    echo \"Waiting for deployment and service to be ready on autopilot-cluster-1...\"
+                    kubectl rollout status deployment/flask-app-deployment
+                    kubectl wait --for=condition=ready pod -l app=flask-app
+                    kubectl wait --for=condition=available deployment/flask-app-deployment
+                    """
+                    sh "sleep 45"
+                }
+            }
+        }
+
+        stage('Test Website') {
+            steps {
+                // Test the website on the IP provided by Kubernetes service
+                echo "Testing website..."
+                sh """
+                CLUSTER_IP=\$(kubectl get service flask-app-service -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                # Check if CLUSTER_IP is empty, if it is, exit the script
+                if [ -z "\$CLUSTER_IP" ]; then
+                    echo \"Error: LoadBalancer IP not found. Exiting...\"
+                    exit 1
+                fi
+
+                status_code=\$(curl -sL -w \"%{http_code}\" \"http://\$CLUSTER_IP:5000\" -o /dev/null)
+                if [ \$status_code -eq 200 ]; then
+                    echo \"Website is working fine\"
+                else
+                    echo \"Website is not responding with 200 OK\"
+                fi
+                """
+            }
+        }
+
+        stage('Cleanup Kubernetes Resources on test server') {
+            steps {
+                // Delete Kubernetes resources
+                sh """
+                helm uninstall my-gcs-repo
+                """
+            }
+        }
+
+        // New stage to apply Kubernetes manifests on autopilot-cluster-2
+        stage('Apply Kubernetes Manifests on autopilot-cluster-2') {
+            steps {
+                echo "Applying Kubernetes manifests on autopilot-cluster-2..."
+
+                // Call the function to perform Kubernetes apply for autopilot-cluster-2
+                performKubernetesApply("cluster-1")
+
+                // Wait until all pods are in the "Running" state
+                sh """
+                echo \"Waiting for all pods to be running on autopilot-cluster-2...\"
+                kubectl wait --for=condition=ready pod -l app=flask-app -n default
+                kubectl wait --for=condition=ready pod -l app=redis-db -n default
+                """
+                
+                // Get Load Balancer IP
+                sh """
+                CLUSTER_IP=\$(kubectl get service flask-app-service -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                # Check if CLUSTER_IP is empty, if it is, exit the script
+                if [ -z "\$CLUSTER_IP" ]; then
+                    echo \"Error: LoadBalancer IP not found. Exiting...\"
+                    exit 1
+                fi
+
+                echo \"Load Balancer IP: \$CLUSTER_IP\"
+                echo \"Website is running\"
+                """
+            }
+        }
+    }
+}
