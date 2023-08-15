@@ -14,9 +14,8 @@ def deployKubernetesResources() {
             echo "Helm release '$releaseName' doesn't exist. Installing..."
             sh "helm install $releaseName my-flask-app/"
         }
-
-
-
+    }
+}
 
 def performKubernetesApply(clusterName) {
     // Apply Flask app deployment
@@ -25,13 +24,8 @@ def performKubernetesApply(clusterName) {
     
     helm repo update
     helm install my-gcs-repo /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/
-    
-    
-    
     """
-
-
-
+    
     // Sleep for a few seconds to allow the application to start
     sleep 20
 }
@@ -50,6 +44,9 @@ pipeline {
                         docker rmi -f oryaeer/flaskapp:new
                         docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
                     '
+                    """
+                    sh """
+                    pwd
                     """
                 }
             }
