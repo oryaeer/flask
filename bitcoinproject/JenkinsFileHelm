@@ -39,15 +39,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     echo "Switching to oryaeer user and performing cleanup..."
                     sh """
-                    echo \$PASSWORD | sudo -S -u oryaeer bash -c '
+                    echo $PASSWORD | sudo -S -u oryaeer bash -c '
                         whoami
                         docker rmi -f oryaeer/flaskapp:new
-                       
                         docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
-                        pwd
-                        whoami
-                        cd /home/oryaeer/Desktop/flask/bitcoinproject
-                        ./scripts/cleanbucket.sh
                     '
                     """
                     sh """
