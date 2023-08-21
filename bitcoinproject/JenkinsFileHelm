@@ -21,7 +21,7 @@ def performKubernetesApply(clusterName) {
     // Apply Flask app deployment
     sh """
     gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2-a
-    
+    helm repo add my-flask-app gs://helmoryaeer/
     helm repo update
     helm install my-gcs-repo /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/my-first-flask/
     """
@@ -42,7 +42,10 @@ pipeline {
                     echo $PASSWORD | sudo -S -u oryaeer bash -c '
                         whoami
                         docker rmi -f oryaeer/flaskapp:new
+                       
                         docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
+                        cd /home/oryaeer/Desktop/flask/bitcoinproject
+                        ./scripts/cleanbucket.sh
                     '
                     """
                     sh """
