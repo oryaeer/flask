@@ -43,7 +43,6 @@ pipeline {
                         whoami
                         docker rmi -f oryaeer/flaskapp:new
                         docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
-                        cd /home/oryaeer/Desktop/flask/bitcoinproject/
                         pwd
                         whoami
                     '
