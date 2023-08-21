@@ -36,21 +36,16 @@ pipeline {
     stages {
         stage('Cleanup') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    echo "Switching to oryaeer user and performing cleanup..."
-                    sh """
-                    echo \$PASSWORD | sudo -S -u oryaeer bash -c '
-                        whoami
-                        docker rmi -f oryaeer/flaskapp:new
-                        docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
-                        pwd
-                        whoami
-                    '
-                    """
-                    sh """
-                    pwd
-                    """
-                }
+                sh """
+                whoami
+                docker rmi -f oryaeer/flaskapp:new
+                docker image ls --format '{{.ID}}' oryaeer/flaskapp --filter 'dangling=false' | sort -r | awk 'NR>3' | xargs -I {} docker image rm -f {}
+                pwd
+                whoami
+                """
+                sh """
+                pwd
+                """
             }
         }
 
@@ -69,7 +64,6 @@ pipeline {
                             docker push oryaeer/flaskapp:5.${BUILD_NUMBER}
                             chmod +x /home/oryaeer/Desktop/flask/bitcoinproject/scripts/helm-version.sh
                             ./scripts/helm-version.sh
-                        
                         '
                         """
                     }
@@ -80,13 +74,10 @@ pipeline {
         stage('Apply Kubernetes Manifests on test server') {
             steps {
                 echo "Applying Kubernetes manifests..."
-
                 // Define the path for the destination directory
                 script {
-
                     // Call the function to perform Kubernetes apply
                     performKubernetesApply("cluster-test")
-
                     // Wait until the deployment and service are ready
                     sh """
                     echo \"Waiting for deployment and service to be ready on autopilot-cluster-1...\"
@@ -110,7 +101,6 @@ pipeline {
                     echo \"Error: LoadBalancer IP not found. Exiting...\"
                     exit 1
                 fi
-
                 status_code=\$(curl -sL -w \"%{http_code}\" \"http://\$CLUSTER_IP:5000\" -o /dev/null)
                 if [ \$status_code -eq 200 ]; then
                     echo \"Website is working fine\"
@@ -134,17 +124,14 @@ pipeline {
         stage('Apply Kubernetes Manifests on autopilot-cluster-2') {
             steps {
                 echo "Applying Kubernetes manifests on autopilot-cluster-2..."
-
                 // Call the function to perform Kubernetes apply for autopilot-cluster-2
                 performKubernetesApply("cluster-1")
-
                 // Wait until all pods are in the "Running" state
                 sh """
                 echo \"Waiting for all pods to be running on autopilot-cluster-2...\"
                 kubectl wait --for=condition=ready pod -l app=flask-app -n default
                 kubectl wait --for=condition=ready pod -l app=redis-db -n default
                 """
-                
                 // Get Load Balancer IP
                 sh """
                 CLUSTER_IP=\$(kubectl get service flask-app-service -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -153,7 +140,6 @@ pipeline {
                     echo \"Error: LoadBalancer IP not found. Exiting...\"
                     exit 1
                 fi
-
                 echo \"Load Balancer IP: \$CLUSTER_IP\"
                 echo \"Website is running\"
                 """
