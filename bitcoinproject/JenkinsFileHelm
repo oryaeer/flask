@@ -39,7 +39,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'oryaeer-credentials', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     echo "Switching to oryaeer user and performing cleanup..."
                     sh """
-                    echo $PASSWORD | sudo -S -u oryaeer bash -c '
+                    echo \$PASSWORD | sudo -S -u oryaeer bash -c '
                         whoami
                         docker rmi -f oryaeer/flaskapp:new
                        
