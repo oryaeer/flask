@@ -20,7 +20,7 @@ def deployKubernetesResources() {
 def performKubernetesApply(clusterName) {
     // Apply Flask app deployment
     sh """
-    gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2
+    gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2-a
     
     helm repo update
     helm install my-gcs-repo /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/my-first-flask/
