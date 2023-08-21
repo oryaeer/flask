@@ -23,7 +23,7 @@ def performKubernetesApply(clusterName) {
     gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2
     
     helm repo update
-    helm install my-gcs-repo /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/
+    helm install my-gcs-repo /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/my-first-flask/
     """
     
     // Sleep for a few seconds to allow the application to start
@@ -67,9 +67,7 @@ pipeline {
                             docker push oryaeer/flaskapp:5.${BUILD_NUMBER}
                             chmod +x /home/oryaeer/Desktop/flask/bitcoinproject/scripts/helm-version.sh
                             ./scripts/helm-version.sh
-                            helm package /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask
-                            gsutil cp my-flask-app-0.1.${BUILD_NUMBER}.tgz gs://helmoryaeer
-                            rm my-first-flask/my-flask-app-0.1.${BUILD_NUMBER}.tgz
+                        
                         '
                         """
                     }
@@ -83,12 +81,12 @@ pipeline {
 
                 // Define the path for the destination directory
                 script {
-                    def destDir = "/var/lib/jenkins/workspace/docker_pipeline/k8s/bitcoinproject"
+                    def destDir = "/var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/"
 
                     // Check if the directory exists
                     sh """
                     if [ ! -d ${destDir} ]; then
-                        sudo git clone https://github.com/oryaeer/flask.git /var/lib/jenkins/workspace/docker_pipeline/k8s/bitcoinproject
+                        sudo git clone https://github.com/oryaeer/flask.git /var/lib/jenkins/workspace/Helm_Pipeline/
                     else
                         echo \"Directory already exists. Skipping git clone.\"
                     fi
