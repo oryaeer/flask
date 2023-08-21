@@ -81,16 +81,6 @@ pipeline {
 
                 // Define the path for the destination directory
                 script {
-                    def destDir = "/var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/"
-
-                    // Check if the directory exists
-                    sh """
-                    if [ ! -d ${destDir} ]; then
-                        sudo git clone https://github.com/oryaeer/flask.git /var/lib/jenkins/workspace/Helm_Pipeline/
-                    else
-                        echo \"Directory already exists. Skipping git clone.\"
-                    fi
-                    """
 
                     // Call the function to perform Kubernetes apply
                     performKubernetesApply("cluster-test")
