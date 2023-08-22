@@ -24,7 +24,7 @@ def performKubernetesApply(clusterName) {
     helm repo add my-flask-app gs://helmoryaeer/
     helm repo update
     chmod +x /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/helmstatus.sh
-    ./scripts/helmstatus.sh
+    ./var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/helmstatus.sh
     """
     
     // Sleep for a few seconds to allow the application to start
