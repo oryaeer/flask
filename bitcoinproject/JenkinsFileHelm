@@ -23,8 +23,11 @@ def performKubernetesApply(clusterName) {
     gcloud container clusters get-credentials ${clusterName} --project cool-evening-393307 --region europe-central2-a
     helm repo add my-flask-app gs://helmoryaeer/
     helm repo update
-    chmod +x /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/helmstatus.sh
-    ./var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/helmstatus.sh
+    pwd
+    cd /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/
+    pwd
+    chmod +x helmstatus.sh
+    ./helmstatus.sh
     """
     
     // Sleep for a few seconds to allow the application to start
