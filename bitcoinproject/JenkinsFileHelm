@@ -51,7 +51,7 @@ def performKubernetesApply(clusterName) {
     
     // Sleep for a few seconds to allow the application to start
     sleep 20
-}
+
 
 pipeline {
     agent any
