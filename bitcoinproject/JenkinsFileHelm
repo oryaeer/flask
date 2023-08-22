@@ -1,6 +1,6 @@
 def deployKubernetesResources() {
     def releaseName = "my-gcs-repo"
-    dir('flask/bitcoinproject') {
+    dir('/var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/') {
         sh "helm repo update"
         // Check if the Helm release already exists
         def releaseStatus = sh(
