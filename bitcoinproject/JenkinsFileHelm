@@ -24,7 +24,7 @@ def performKubernetesApply(clusterName) {
     helm repo add my-flask-app gs://helmoryaeer/
     helm repo update
     pwd
-    cd /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/scripts/
+    cd /var/lib/jenkins/workspace/Helm_Pipeline/flask/bitcoinproject/scripts/
     pwd
     chmod +x helmstatus.sh
     ./helmstatus.sh
@@ -52,7 +52,7 @@ pipeline {
                     '
                     """
                     sh """
-                    rm -rf * /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject 
+                    rm -rf * /var/lib/jenkins/workspace/Helm_Pipeline/flask/ 
                     cd /var/lib/jenkins/workspace/Helm_Pipeline/
                     git clone https://github.com/oryaeer/flask.git 
                 
