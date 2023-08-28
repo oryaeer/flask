@@ -52,7 +52,10 @@ pipeline {
                     '
                     """
                     sh """
-                    pwd
+                    rm -rf * /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject 
+                    cd var/lib/jenkins/workspace/Helm_Pipeline/
+                    git clone https://github.com/oryaeer/flask.git 
+                
                     """
                 }
             }
@@ -131,7 +134,7 @@ pipeline {
             steps {
                 // Delete Kubernetes resources
                 sh """
-                helm uninstall my-gcs-repo
+                helm uninstall my-flask-app
                 """
             }
         }
