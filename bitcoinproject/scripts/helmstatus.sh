@@ -1,13 +1,13 @@
 #!/bin/bash
 
-command_output=$(helm status my-gcs-repo 2>&1)
+command_output=$(helm status my-flas 2>&1)
 
 expected_error="Error: release: not found"
 
 if [ "$command_output" = "$expected_error" ]; then
-    helm install my-gcs-repo /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/my-first-flask
+    helm install my-flask-app my-flask-app/my-flask-app
 else
-    helm upgrade --recreate-pods my-gcs-repo /var/lib/jenkins/workspace/Helm_Pipeline/bitcoinproject/my-first-flask
+    helm upgrade --recreate-pods my-flask-app my-flask-app/my-flask-app
 fi
 
 
