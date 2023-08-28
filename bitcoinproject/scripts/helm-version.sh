@@ -15,12 +15,12 @@ NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 sed -i "s/version: $VERSION/version: $NEW_VERSION/g" /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/Chart.yaml
 # Package the helm chart
 helm package . --destination /tmp --version $NEW_VERSION --app-version $NEW_VERSION
-helm repo index . --destination /tmp
+helm repo index . 
 # Rename the package
 mv /tmp/my-flask-app-$NEW_VERSION.tgz /tmp/my-flask-app-$NEW_VERSION.tgz
 # Push the package to the GCP bucket
 gsutil cp /tmp/my-flask-app-$NEW_VERSION.tgz gs://helmoryaeer
-gsutil cp /tmp/index.yaml gs://helmoryaeer
+gsutil cp /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/index.yaml gs://helmoryaeer
 # Cleanup
 rm /tmp/my-flask-app-$NEW_VERSION.tgz
 echo "Chart helm-project-$NEW_VERSION.tgz has been uploaded to the bucket-helmoryaeer."
