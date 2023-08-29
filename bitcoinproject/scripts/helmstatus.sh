@@ -1,6 +1,6 @@
 #!/bin/bash
 
-command_output=$(helm status my-flas 2>&1)
+command_output=$(helm status my-flask-app 2>&1)
 
 expected_error="Error: release: not found"
 
