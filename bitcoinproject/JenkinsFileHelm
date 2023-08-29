@@ -143,6 +143,7 @@ pipeline {
         stage('Apply Kubernetes Manifests on autopilot-cluster-2') {
             steps {
                 echo "Applying Kubernetes manifests on autopilot-cluster-2..."
+                sh "helm uninstall my-flask-app"
 
                 // Call the function to perform Kubernetes apply for autopilot-cluster-2
                 performKubernetesApply("cluster-1")
