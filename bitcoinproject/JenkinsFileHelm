@@ -151,7 +151,7 @@ pipeline {
 
                 // Wait until all pods are in the "Running" state
                 sh """
-                helm uninstall my-flask-app
+                
                 echo \"Waiting for all pods to be running on autopilot-cluster-2...\"
                 kubectl wait --for=condition=ready pod -l app=flask-app -n default
                 kubectl wait --for=condition=ready pod -l app=redis-db -n default
