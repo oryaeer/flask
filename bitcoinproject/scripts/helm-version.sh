@@ -14,6 +14,7 @@ NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 # Update Chart.yaml with the new version
 sed -i "s/version: $VERSION/version: $NEW_VERSION/g" /home/oryaeer/Desktop/flask/bitcoinproject/my-first-flask/Chart.yaml
 # Package the helm chart
+helm repo update
 helm package . --destination /tmp --version $NEW_VERSION --app-version $NEW_VERSION
 helm repo index /tmp
 # Rename the package
