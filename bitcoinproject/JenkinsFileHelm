@@ -1,4 +1,21 @@
-
+def deployKubernetesResources() {
+    def releaseName = "my-gcs-repo"
+    dir('flask/bitcoinproject') {
+        sh "helm repo update"
+        // Check if the Helm release already exists
+        def releaseStatus = sh(
+            script: "helm status $releaseName",
+            returnStatus: true
+        ).trim()
+        if (releaseStatus == 0) {
+            echo "Helm release '$releaseName' already exists. Upgrading..."
+            sh "helm upgrade $releaseName my-flask-app/"
+        } else {
+            echo "Helm release '$releaseName' doesn't exist. Installing..."
+            sh "helm install $releaseName my-flask-app/"
+        }
+    }
+}
 
 def performKubernetesApply(clusterName) {
     // Apply Flask app deployment
